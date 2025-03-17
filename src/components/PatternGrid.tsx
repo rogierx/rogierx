@@ -11,8 +11,6 @@ export default function PatternGrid() {
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
   const [progress, setProgress] = useState(0);
-  const progressRef = useRef(0);
-  const animationFrameRef = useRef<number>();
 
   // ... (keep all the pattern generation functions the same)
 
@@ -41,40 +39,50 @@ export default function PatternGrid() {
     return { type, canvas };
   };
 
-  const updateProgress = () => {
-    if (progressRef.current < 100) {
-      progressRef.current += 1;
-      setProgress(progressRef.current);
-      animationFrameRef.current = requestAnimationFrame(updateProgress);
-    }
-  };
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const generatePatterns = async () => {
     setLoading(true);
-    progressRef.current = 0;
     setProgress(0);
     const types: Pattern['type'][] = ['noise', 'geometric', 'mathematical', 'fractal'];
     const newPatterns: Pattern[] = [];
 
-    // Start progress animation
-    updateProgress();
+    let currentProgress = 0;
+    const updateProgressWithText = async (text: string, targetProgress: number) => {
+      const steps = targetProgress - currentProgress;
+      for (let i = 0; i < steps; i++) {
+        currentProgress++;
+        setProgress(currentProgress);
+        setLoadingText(text);
+        await sleep(20); // 20ms delay for smooth progress
+      }
+    };
 
-    for (let i = 0; i < 4; i++) {
-      setLoadingText(`Synthesizing pattern ${i + 1}/4...\nProcessing quantum state ${Math.floor(progressRef.current % 25) + 1}/25`);
-      const pattern = await generatePattern(types[i]);
-      if (pattern) newPatterns.push(pattern);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Give time for pattern generation
+    try {
+      for (let i = 0; i < 4; i++) {
+        const baseProgress = i * 25;
+        const pattern = generatePattern(types[i]);
+        
+        // Update progress while "generating" the pattern
+        for (let step = 1; step <= 25; step++) {
+          await updateProgressWithText(
+            `Synthesizing pattern ${i + 1}/4...\nProcessing quantum state ${step}/25`,
+            baseProgress + step
+          );
+        }
+
+        const result = await pattern;
+        if (result) newPatterns.push(result);
+      }
+
+      // Ensure we reach 100%
+      await updateProgressWithText('Pattern synthesis complete. Matrix stabilized.', 100);
+      await sleep(500); // Show 100% briefly
+      
+      setPatterns(newPatterns);
+    } finally {
+      setLoading(false);
     }
-
-    // Clean up animation
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-    setProgress(100);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Show 100% briefly
-
-    setPatterns(newPatterns);
-    setLoading(false);
   };
 
   const savePattern = (canvas: HTMLCanvasElement) => {
@@ -93,11 +101,6 @@ export default function PatternGrid() {
 
   useEffect(() => {
     generatePatterns();
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
   }, []);
 
   if (loading) {
