@@ -1,22 +1,26 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
 const LoadingContainer = styled.div`
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
   color: #0f0;
   font-family: monospace;
   font-size: 14px;
   text-align: left;
-  z-index: 101;
-  text-shadow: 0 0 5px #0f0;
-  background: #000;
-  padding: 20px;
   white-space: pre;
+`;
+
+const TextContainer = styled.div`
+  text-shadow: 0 0 5px #0f0;
 `;
 
 interface Props {
@@ -63,7 +67,9 @@ ${progressBar} ${progress.toFixed(1)}%
 
   return (
     <LoadingContainer>
-      {matrixText}
+      <TextContainer>
+        {matrixText}
+      </TextContainer>
     </LoadingContainer>
   );
 }
