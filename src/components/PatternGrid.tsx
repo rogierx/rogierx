@@ -4,7 +4,70 @@ import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import MatrixLoading from './MatrixLoading';
 
-// ... (keep all the styled components and interfaces the same)
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #000;
+  padding: 20px;
+  gap: 20px;
+`;
+
+const PatternContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 100%;
+  width: fit-content;
+`;
+
+const CanvasWrapper = styled.div`
+  position: relative;
+  cursor: pointer;
+  border: 2px solid #0f0;
+  transition: transform 0.3s ease;
+  background: rgba(0, 255, 0, 0.05);
+
+  &:hover {
+    transform: scale(1.02);
+    border-color: #0f0;
+    box-shadow: 0 0 15px #0f0;
+  }
+`;
+
+const Canvas = styled.canvas`
+  width: 500px;
+  height: 500px;
+`;
+
+const Controls = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+`;
+
+const Button = styled.button`
+  background: #000;
+  color: #0f0;
+  border: 1px solid #0f0;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-family: monospace;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #0f0;
+    color: #000;
+    box-shadow: 0 0 10px #0f0;
+  }
+`;
+
+interface Pattern {
+  type: 'noise' | 'geometric' | 'mathematical' | 'fractal';
+  canvas: HTMLCanvasElement;
+}
 
 export default function PatternGrid() {
   const [patterns, setPatterns] = useState<Pattern[]>([]);
@@ -12,7 +75,7 @@ export default function PatternGrid() {
   const [loadingText, setLoadingText] = useState('');
   const [progress, setProgress] = useState(0);
 
-  // ... (keep all the pattern generation functions the same)
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const generatePattern = async (type: Pattern['type']) => {
     const canvas = document.createElement('canvas');
@@ -38,8 +101,6 @@ export default function PatternGrid() {
 
     return { type, canvas };
   };
-
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const generatePatterns = async () => {
     setLoading(true);
