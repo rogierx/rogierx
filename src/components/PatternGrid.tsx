@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import MatrixLoading from './MatrixLoading';
 
 const Container = styled.div`
   display: flex;
@@ -89,62 +90,21 @@ export default function PatternGrid() {
     const imageData = ctx.createImageData(width, height);
     const data = imageData.data;
     
-    const noise3D = (x: number, y: number, z: number) => {
-      const X = Math.floor(x) & 255;
-      const Y = Math.floor(y) & 255;
-      const Z = Math.floor(z) & 255;
-      
-      x -= Math.floor(x);
-      y -= Math.floor(y);
-      z -= Math.floor(z);
-      
-      const u = fade(x);
-      const v = fade(y);
-      const w = fade(z);
-      
-      const A = p[X] + Y;
-      const AA = p[A] + Z;
-      const AB = p[A + 1] + Z;
-      const B = p[X + 1] + Y;
-      const BA = p[B] + Z;
-      const BB = p[B + 1] + Z;
-      
-      return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z),
-                                    grad(p[BA], x - 1, y, z)),
-                             lerp(u, grad(p[AB], x, y - 1, z),
-                                    grad(p[BB], x - 1, y - 1, z))),
-                     lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),
-                                    grad(p[BA + 1], x - 1, y, z - 1)),
-                             lerp(u, grad(p[AB + 1], x, y - 1, z - 1),
-                                    grad(p[BB + 1], x - 1, y - 1, z - 1))));
-    };
-    
-    const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
-    const lerp = (t: number, a: number, b: number) => a + t * (b - a);
-    const grad = (hash: number, x: number, y: number, z: number) => {
-      const h = hash & 15;
-      const u = h < 8 ? x : y;
-      const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
-      return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
-    };
-    
-    const p = new Array(512);
-    const permutation = [...Array(256)].map(() => Math.floor(Math.random() * 256));
-    for (let i = 0; i < 256; i++) p[256 + i] = p[i] = permutation[i];
-
-    let z = Math.random() * 100;
-    const scale = 0.01 + Math.random() * 0.03;
-    
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        const value = (noise3D(x * scale, y * scale, z) + 1) * 0.5;
         const idx = (y * width + x) * 4;
         
-        const hue = (value * 360 + Math.random() * 30) % 360;
-        const saturation = 70 + Math.random() * 30;
-        const lightness = 40 + value * 20;
+        // Generate trippy patterns using sine waves and noise
+        const scale = 0.01;
+        const t = Date.now() * 0.001;
         
-        const [r, g, b] = hslToRgb(hue / 360, saturation / 100, lightness / 100);
+        const value1 = Math.sin(x * scale + t) * Math.cos(y * scale + t);
+        const value2 = Math.sin((x + y) * scale) * Math.cos(x * scale - y * scale);
+        const value3 = Math.sin(Math.sqrt(x * x + y * y) * scale);
+        
+        const r = Math.sin(value1 * Math.PI * 2) * 127 + 128;
+        const g = Math.sin(value2 * Math.PI * 2) * 127 + 128;
+        const b = Math.sin(value3 * Math.PI * 2) * 127 + 128;
         
         data[idx] = r;
         data[idx + 1] = g;
@@ -169,11 +129,8 @@ export default function PatternGrid() {
       const size = 20 + Math.random() * 200;
       
       const hue = (baseHue + Math.random() * 60) % 360;
-      const saturation = 70 + Math.random() * 30;
-      const lightness = 40 + Math.random() * 20;
-      
-      ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${0.1 + Math.random() * 0.4})`;
-      ctx.strokeStyle = `hsla(${(hue + 180) % 360}, ${saturation}%, ${lightness}%, 0.5)`;
+      ctx.fillStyle = `hsla(${hue}, 100%, 50%, ${0.1 + Math.random() * 0.4})`;
+      ctx.strokeStyle = `hsla(${(hue + 180) % 360}, 100%, 50%, 0.5)`;
       ctx.lineWidth = 1 + Math.random() * 3;
       
       ctx.beginPath();
@@ -203,32 +160,25 @@ export default function PatternGrid() {
     
     const centerX = width / 2;
     const centerY = height / 2;
-    const scale = 100 + Math.random() * 200;
-    const complexity = 1 + Math.random() * 5;
-    const timeValue = Math.random() * Math.PI * 2;
+    const scale = 0.02;
+    const timeValue = Date.now() * 0.001;
     
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        const dx = (x - centerX) / scale;
-        const dy = (y - centerY) / scale;
+        const dx = (x - centerX) * scale;
+        const dy = (y - centerY) * scale;
         
         const angle = Math.atan2(dy, dx);
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        const value = Math.sin(distance * complexity + angle * 3 + timeValue) * 
-                     Math.cos(distance * complexity - angle * 2) *
-                     Math.sin(distance * complexity * 0.5);
+        const value1 = Math.sin(distance * 10 + timeValue) * Math.cos(angle * 5);
+        const value2 = Math.sin(distance * 5 - timeValue) * Math.sin(angle * 3);
+        const value3 = Math.cos(distance * 3 + angle * 2 + timeValue);
         
         const idx = (y * width + x) * 4;
-        const hue = (value * 180 + 180) % 360;
-        const saturation = 70 + value * 30;
-        const lightness = 40 + value * 20;
-        
-        const [r, g, b] = hslToRgb(hue / 360, saturation / 100, lightness / 100);
-        
-        data[idx] = r;
-        data[idx + 1] = g;
-        data[idx + 2] = b;
+        data[idx] = (value1 + 1) * 127;
+        data[idx + 1] = (value2 + 1) * 127;
+        data[idx + 2] = (value3 + 1) * 127;
         data[idx + 3] = 255;
       }
     }
@@ -241,7 +191,7 @@ export default function PatternGrid() {
     const data = imageData.data;
     
     const maxIterations = 100;
-    const zoom = Math.random() * 2 + 1;
+    const zoom = 1.5 + Math.random();
     const offsetX = -0.5 + Math.random() * 1;
     const offsetY = Math.random() * 1 - 0.5;
     
@@ -264,12 +214,8 @@ export default function PatternGrid() {
         if (iteration === maxIterations) {
           data[idx] = data[idx + 1] = data[idx + 2] = 0;
         } else {
-          const hue = (iteration / maxIterations * 360 + Math.random() * 60) % 360;
-          const saturation = 70 + Math.random() * 30;
-          const lightness = 40 + (iteration / maxIterations) * 20;
-          
-          const [r, g, b] = hslToRgb(hue / 360, saturation / 100, lightness / 100);
-          
+          const hue = (iteration / maxIterations * 360 + Date.now() * 0.1) % 360;
+          const [r, g, b] = hslToRgb(hue / 360, 1, 0.5);
           data[idx] = r;
           data[idx + 1] = g;
           data[idx + 2] = b;
