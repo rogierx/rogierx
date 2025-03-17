@@ -19,84 +19,46 @@ const LoadingContainer = styled.div`
   transform: translate(-50%, -50%);
   color: #0f0;
   font-family: monospace;
-  font-size: 16px;
+  font-size: 14px;
   text-align: left;
   z-index: 101;
   text-shadow: 0 0 5px #0f0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
   padding: 20px;
   border: 1px solid #0f0;
-  max-width: 600px;
-  width: 100%;
-  white-space: pre-wrap;
+  width: 600px;
+  white-space: pre;
+`;
+
+const GlitchText = styled.div<{ top: number; left: number }>`
+  position: absolute;
+  top: ${props => props.top}%;
+  left: ${props => props.left}%;
+  color: #00ff00;
+  opacity: 0.3;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: pre;
+  pointer-events: none;
 `;
 
 interface Props {
   text: string;
+  progress: number;
   isLoading: boolean;
 }
 
-const matrixIntro = [
-  "Wake up, Neo...",
-  "The Matrix has you...",
-  "Follow the white rabbit...",
-  "Knock, knock, Neo...",
-  "",
-  "Initializing pattern generation system...",
-  "[■■■■■■■■■■] 100%",
-  "",
-  "System Status:",
-  "============",
-  "GPU Acceleration: ENABLED",
-  "Neural Network: ONLINE",
-  "Pattern Engine: READY",
-  "Memory Usage: OPTIMAL",
-  "",
-  "Generating patterns...",
-  "Please stand by..."
-];
+const createGlitchText = () => {
+  const glitchChars = "█▓▒░█▓▒░";
+  return Array(Math.floor(Math.random() * 20) + 10)
+    .fill(0)
+    .map(() => glitchChars[Math.floor(Math.random() * glitchChars.length)])
+    .join("");
+};
 
-export default function MatrixLoading({ text, isLoading }: Props) {
+export default function MatrixLoading({ text, progress, isLoading }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [displayedText, setDisplayedText] = useState<string[]>([]);
-  const [currentLine, setCurrentLine] = useState(0);
-  const [currentChar, setCurrentChar] = useState(0);
-
-  useEffect(() => {
-    if (!isLoading) {
-      setDisplayedText([]);
-      setCurrentLine(0);
-      setCurrentChar(0);
-      return;
-    }
-
-    const typewriterInterval = setInterval(() => {
-      if (currentLine >= matrixIntro.length) {
-        clearInterval(typewriterInterval);
-        return;
-      }
-
-      const currentText = matrixIntro[currentLine];
-      if (currentChar >= currentText.length) {
-        setCurrentLine(prev => prev + 1);
-        setCurrentChar(0);
-        setDisplayedText(prev => [...prev, currentText]);
-      } else {
-        setCurrentChar(prev => prev + 1);
-        setDisplayedText(prev => {
-          const newText = [...prev];
-          if (newText.length <= currentLine) {
-            newText.push(currentText.substring(0, currentChar + 1));
-          } else {
-            newText[currentLine] = currentText.substring(0, currentChar + 1);
-          }
-          return newText;
-        });
-      }
-    }, 50);
-
-    return () => clearInterval(typewriterInterval);
-  }, [isLoading, currentLine, currentChar]);
+  const [glitches, setGlitches] = useState<Array<{ top: number; left: number; text: string }>>([]);
 
   useEffect(() => {
     if (!isLoading) return;
@@ -133,20 +95,68 @@ export default function MatrixLoading({ text, isLoading }: Props) {
     };
 
     const interval = setInterval(draw, 33);
-    return () => clearInterval(interval);
+
+    // Update glitch effects
+    const glitchInterval = setInterval(() => {
+      setGlitches(Array(3).fill(0).map(() => ({
+        top: Math.random() * 60 + 20,
+        left: Math.random() * 60 + 20,
+        text: createGlitchText()
+      })));
+    }, 500);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(glitchInterval);
+    };
   }, [isLoading]);
 
   if (!isLoading) return null;
+
+  const progressBar = "[" + "■".repeat(Math.floor(progress / 10)) + "□".repeat(10 - Math.floor(progress / 10)) + "]";
+
+  const matrixText = `
+=====================================
+>>> NEURAL ART SYNTHESIS MATRIX v2.1
+>>> QUANTUM PATTERN GENERATOR
+=====================================
+
+> System Status: ONLINE
+> Neural Cores: ACTIVE
+> Pattern Engine: INITIALIZED
+> Quantum State: COHERENT
+
+> Operation: ${text}
+> Resolution: 4K (3840x2160)
+> Memory Buffer: ALLOCATED
+> Pattern Matrix: STABILIZED
+
+${progressBar} ${progress.toFixed(1)}%
+
+> Subprocess: Pattern Synthesis
+> Fractal Dimension: OPTIMAL
+> Entropy Level: BALANCED
+> Reality Distortion: ENABLED
+
+> Pattern Type: CALCULATING...
+> Color Matrix: PROCESSING...
+> Neural Weights: OPTIMIZING...
+> Quantum Fluctuations: STABLE
+
+[SYSTEM READY FOR NEXT OPERATION]
+=====================================`;
 
   return (
     <>
       <Canvas ref={canvasRef} />
       <LoadingContainer>
-        {displayedText.map((line, i) => (
-          <div key={i}>{line}</div>
-        ))}
-        {text && <div style={{ marginTop: '20px', color: '#0ff' }}>{text}</div>}
+        {matrixText}
       </LoadingContainer>
+      {glitches.map((glitch, i) => (
+        <GlitchText key={i} top={glitch.top} left={glitch.left}>
+          {glitch.text}
+        </GlitchText>
+      ))}
     </>
   );
 }
