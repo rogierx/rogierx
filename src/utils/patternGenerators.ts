@@ -5,12 +5,12 @@ export function generateNoise(ctx: CanvasRenderingContext2D, width: number, heig
   const data = imageData.data;
 
   for (let i = 0; i < data.length; i += 4) {
-    const x = (i / 4) % width;
-    const y = Math.floor((i / 4) / width);
+    const pixelX = (i / 4) % width;
+    const pixelY = Math.floor((i / 4) / width);
     
     // Generate Perlin-like noise
     const frequency = 0.01;
-    const noise = Math.sin(x * frequency) * Math.cos(y * frequency) * Math.random();
+    const noise = Math.sin(pixelX * frequency) * Math.cos(pixelY * frequency) * Math.random();
     
     // Create a psychedelic color palette
     const r = Math.sin(noise * 2) * 127 + 128;
@@ -34,12 +34,12 @@ export function generateGeometric(ctx: CanvasRenderingContext2D, width: number, 
   const maxSize = Math.min(width, height) / 2;
 
   for (let i = 0; i < numShapes; i++) {
-    const x = Math.random() * width;
-    const y = Math.random() * height;
+    const shapeX = Math.random() * width;
+    const shapeY = Math.random() * height;
     const size = Math.random() * maxSize;
 
     // Create gradient
-    const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+    const gradient = ctx.createRadialGradient(shapeX, shapeY, 0, shapeX, shapeY, size);
     gradient.addColorStop(0, `hsla(${Math.random() * 360}, 100%, 50%, 0.8)`);
     gradient.addColorStop(1, `hsla(${Math.random() * 360}, 100%, 50%, 0)`);
 
@@ -50,23 +50,23 @@ export function generateGeometric(ctx: CanvasRenderingContext2D, width: number, 
     const shapeType = Math.floor(Math.random() * 4);
     switch (shapeType) {
       case 0: // Circle
-        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.arc(shapeX, shapeY, size, 0, Math.PI * 2);
         break;
       case 1: // Square
-        ctx.rect(x - size/2, y - size/2, size, size);
+        ctx.rect(shapeX - size/2, shapeY - size/2, size, size);
         break;
       case 2: // Triangle
-        ctx.moveTo(x, y - size/2);
-        ctx.lineTo(x + size/2, y + size/2);
-        ctx.lineTo(x - size/2, y + size/2);
+        ctx.moveTo(shapeX, shapeY - size/2);
+        ctx.lineTo(shapeX + size/2, shapeY + size/2);
+        ctx.lineTo(shapeX - size/2, shapeY + size/2);
         break;
       case 3: // Star
         for (let j = 0; j < 5; j++) {
           const angle = (j * 4 * Math.PI) / 5;
-          const x1 = x + Math.cos(angle) * size;
-          const y1 = y + Math.sin(angle) * size;
-          if (j === 0) ctx.moveTo(x1, y1);
-          else ctx.lineTo(x1, y1);
+          const starX = shapeX + Math.cos(angle) * size;
+          const starY = shapeY + Math.sin(angle) * size;
+          if (j === 0) ctx.moveTo(starX, starY);
+          else ctx.lineTo(starX, starY);
         }
         break;
     }
@@ -82,12 +82,12 @@ export function generateMathematical(ctx: CanvasRenderingContext2D, width: numbe
   const centerY = height / 2;
 
   for (let i = 0; i < data.length; i += 4) {
-    const x = (i / 4) % width - centerX;
-    const y = Math.floor((i / 4) / width) - centerY;
+    const pixelX = (i / 4) % width - centerX;
+    const pixelY = Math.floor((i / 4) / width) - centerY;
     
     // Complex mathematical pattern using trigonometric functions
-    const distance = Math.sqrt(x * x + y * y);
-    const angle = Math.atan2(y, x);
+    const distance = Math.sqrt(pixelX * pixelX + pixelY * pixelY);
+    const angle = Math.atan2(pixelY, pixelX);
     
     const pattern = Math.sin(distance * 0.05) * 
                    Math.cos(angle * 5) * 
@@ -113,27 +113,27 @@ export function generateFractal(ctx: CanvasRenderingContext2D, width: number, he
   const data = imageData.data;
 
   for (let i = 0; i < data.length; i += 4) {
-    const x = (i / 4) % width;
-    const y = Math.floor((i / 4) / width);
+    const pixelX = (i / 4) % width;
+    const pixelY = Math.floor((i / 4) / width);
     
     // Map pixel coordinates to complex plane
-    const a = (x - width/2) * 4 / width;
-    const b = (y - height/2) * 4 / height;
+    let zReal = (pixelX - width/2) * 4 / width;
+    let zImag = (pixelY - height/2) * 4 / height;
     
-    let ca = a;
-    let cb = b;
     let n = 0;
     
     // Julia set iteration
     while (n < maxIterations) {
-      const aa = a * a - b * b;
-      const bb = 2 * a * b;
+      const zRealSquared = zReal * zReal;
+      const zImagSquared = zImag * zImag;
       
-      // Update values
-      ca = aa + 0.355534;  // Real part of c
-      cb = bb + 0.337292;  // Imaginary part of c
+      if (zRealSquared + zImagSquared > 4) break;
       
-      if (ca * ca + cb * cb > 4) break;
+      // z = z^2 + c, where c is a complex constant
+      const nextZReal = zRealSquared - zImagSquared + 0.355534;
+      zImag = 2 * zReal * zImag + 0.337292;
+      zReal = nextZReal;
+      
       n++;
     }
     
@@ -143,22 +143,39 @@ export function generateFractal(ctx: CanvasRenderingContext2D, width: number, he
     const lightness = n < maxIterations ? 50 : 0;
     
     // Convert HSL to RGB
-    const c = (1 - Math.abs(2 * lightness / 100 - 1)) * saturation / 100;
-    const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
-    const m = lightness / 100 - c / 2;
+    const chroma = (1 - Math.abs(2 * lightness / 100 - 1)) * saturation / 100;
+    const huePrime = hue / 60;
+    const secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1));
+    const lightnessAdjustment = lightness / 100 - chroma / 2;
     
-    let r, g, b;
-    if (hue < 60) { r = c; g = x; b = 0; }
-    else if (hue < 120) { r = x; g = c; b = 0; }
-    else if (hue < 180) { r = 0; g = c; b = x; }
-    else if (hue < 240) { r = 0; g = x; b = c; }
-    else if (hue < 300) { r = x; g = 0; b = c; }
-    else { r = c; g = 0; b = x; }
+    let red = 0;
+    let green = 0;
+    let blue = 0;
     
-    data[i] = (r + m) * 255;     // red
-    data[i + 1] = (g + m) * 255; // green
-    data[i + 2] = (b + m) * 255; // blue
-    data[i + 3] = 255;           // alpha
+    if (huePrime >= 0 && huePrime < 1) {
+      red = chroma;
+      green = secondComponent;
+    } else if (huePrime >= 1 && huePrime < 2) {
+      red = secondComponent;
+      green = chroma;
+    } else if (huePrime >= 2 && huePrime < 3) {
+      green = chroma;
+      blue = secondComponent;
+    } else if (huePrime >= 3 && huePrime < 4) {
+      green = secondComponent;
+      blue = chroma;
+    } else if (huePrime >= 4 && huePrime < 5) {
+      red = secondComponent;
+      blue = chroma;
+    } else {
+      red = chroma;
+      blue = secondComponent;
+    }
+    
+    data[i] = (red + lightnessAdjustment) * 255;     // red
+    data[i + 1] = (green + lightnessAdjustment) * 255; // green
+    data[i + 2] = (blue + lightnessAdjustment) * 255;  // blue
+    data[i + 3] = 255;                                  // alpha
   }
 
   ctx.putImageData(imageData, 0, 0);
