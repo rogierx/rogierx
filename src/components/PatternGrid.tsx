@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import MatrixLoading from './MatrixLoading';
+import { generateNoise, generateGeometric, generateMathematical, generateFractal } from '../utils/patternGenerators';
 
 const Container = styled.div`
   display: flex;
