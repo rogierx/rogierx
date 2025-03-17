@@ -1,1 +1,29 @@
-"use client";\n\nimport styled from 'styled-components';\nimport PatternGrid from '@/components/PatternGrid';\nimport MatrixLoading from '@/components/MatrixLoading';\nimport { useState } from 'react';\n\nconst Container = styled.div`\n  min-height: 100vh;\n  background: #000;\n  color: #0f0;\n  padding: 20px;\n`;\n\nconst Title = styled.h1`\n  text-align: center;\n  font-family: monospace;\n  font-size: 36px;\n  margin-bottom: 40px;\n  text-shadow: 0 0 10px #0f0;\n`;\n\nexport default function Home() {\n  return (\n    <Container>\n      <Title>Trippy Art Generator</Title>\n      <PatternGrid />\n    </Container>\n  );\n}\n"
+'use client';
+
+import styled from 'styled-components';
+import PatternGrid from '@/components/PatternGrid';
+import MatrixLoading from '@/components/MatrixLoading';
+
+const Container = styled.div`
+  min-height: 100vh;
+  background: #000;
+  color: #0f0;
+  padding: 20px;
+`;
+
+const Title = styled.h1`
+  text-align: center;
+  font-family: monospace;
+  font-size: 36px;
+  margin-bottom: 40px;
+  text-shadow: 0 0 10px #0f0;
+`;
+
+export default function Home() {
+  return (
+    <Container>
+      <Title>Trippy Art Generator</Title>
+      <PatternGrid />
+    </Container>
+  );
+}
